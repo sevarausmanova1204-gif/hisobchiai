@@ -1,3 +1,4 @@
+import statistics
 from collections import defaultdict
 from datetime import datetime
 
@@ -68,7 +69,11 @@ def compute_forecast(transactions: list[dict], recurring_ratio: float = 0.6) -> 
 
     month_keys = sorted(monthly_totals.keys())
     recent_keys = month_keys[-12:]
-    avg_monthly = sum(monthly_totals[k] for k in recent_keys) / len(recent_keys)
+    # Median ishlatiladi (oddiy arifmetik o'rtacha emas) — chunki bitta g'ayrioddiy
+    # oy (masalan bir martalik katta xarid yoki qo'shimcha to'lov) butun
+    # prognozni yuqoriga tortib yuborishi mumkin. Median bunday alohida
+    # og'ishlarga chidamli, "odatiy" oylik xarajatni yaxshiroq aks ettiradi.
+    avg_monthly = statistics.median(monthly_totals[k] for k in recent_keys)
 
     last_key = month_keys[-1]
 
@@ -107,7 +112,9 @@ def compute_forecast(transactions: list[dict], recurring_ratio: float = 0.6) -> 
                 "name": kategoriya,
                 "example": info["examples"][0] if info["examples"] else kategoriya,
                 "months": len(amounts),
-                "avg": sum(amounts) / len(amounts),
+                # Median: bitta oyda ikki marta to'lov yoki qisman to'lov
+                # bo'lib qolsa ham, "odatiy" oylik summani to'g'ri ko'rsatadi.
+                "avg": statistics.median(amounts),
             }
         )
     recurring.sort(key=lambda x: x["avg"], reverse=True)
