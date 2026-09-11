@@ -9,8 +9,8 @@ from telegram.ext import (
 )
 
 import config
-from handlers import accountant, advisor, balance, cancel, common, export
-from handlers.keyboard import BTN_ADVISOR, BTN_BALANCE, BTN_HELP, BTN_REPORT
+from handlers import accountant, advisor, balance, cancel, common, dashboard, export
+from handlers.keyboard import BTN_ADVISOR, BTN_BALANCE, BTN_DASHBOARD, BTN_HELP, BTN_REPORT
 
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
@@ -32,9 +32,11 @@ def main() -> None:
     application.add_handler(CommandHandler("help", common.help_command))
     application.add_handler(CommandHandler("excel", export.export_excel))
     application.add_handler(CommandHandler("balans", balance.show_balance))
+    application.add_handler(CommandHandler("dashboard", dashboard.show_dashboard))
 
     application.add_handler(MessageHandler(filters.Text([BTN_REPORT]), export.export_excel))
     application.add_handler(MessageHandler(filters.Text([BTN_BALANCE]), balance.show_balance))
+    application.add_handler(MessageHandler(filters.Text([BTN_DASHBOARD]), dashboard.show_dashboard))
     application.add_handler(MessageHandler(filters.Text([BTN_ADVISOR]), common.advisor_prompt))
     application.add_handler(MessageHandler(filters.Text([BTN_HELP]), common.help_command))
 
@@ -42,7 +44,9 @@ def main() -> None:
     application.add_handler(MessageHandler(filters.VOICE | filters.AUDIO, accountant.handle_voice))
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, accountant.handle_text))
 
-    application.add_handler(CallbackQueryHandler(cancel.cancel_transaction, pattern=r"^cancel_tx:\d+$"))
+    application.add_handler(
+        CallbackQueryHandler(cancel.cancel_transaction, pattern=r"^cancel_tx:(Kirim|Chiqim):\d+$")
+    )
 
     logger.info("Bot ishga tushdi...")
     application.run_polling(allowed_updates=None)

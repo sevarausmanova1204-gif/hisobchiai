@@ -20,12 +20,13 @@ async def cancel_transaction(update: Update, context: ContextTypes.DEFAULT_TYPE)
     await query.answer()
 
     try:
-        row_number = int(query.data.split(":", 1)[1])
+        _, turi, row_number_str = query.data.split(":", 2)
+        row_number = int(row_number_str)
     except (IndexError, ValueError):
         return
 
     try:
-        sheets_service.delete_transaction(row_number)
+        sheets_service.delete_transaction(turi, row_number)
     except Exception:
         logger.exception("Tranzaksiyani bekor qilishda xato")
         await query.edit_message_text("Bekor qilishda xatolik yuz berdi. Qayta urinib ko'ring.")

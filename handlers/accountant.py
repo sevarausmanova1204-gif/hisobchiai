@@ -53,7 +53,9 @@ async def _process_transaction_text(update: Update, text: str) -> None:
     reply_markup = None
     if row_number is not None:
         reply_markup = InlineKeyboardMarkup(
-            [[InlineKeyboardButton("❌ Bekor qilish", callback_data=f"cancel_tx:{row_number}")]]
+            [[InlineKeyboardButton(
+                "❌ Bekor qilish", callback_data=f"cancel_tx:{data['turi']}:{row_number}"
+            )]]
         )
 
     await update.message.reply_html(_format_confirmation(data), reply_markup=reply_markup)
