@@ -27,7 +27,9 @@ def transcribe_voice(file_path: str) -> str:
 
 def process_message(text: str) -> dict | None:
     client = get_client()
-    today = date.today().isoformat()
+    today_date = date.today()
+    today = today_date.isoformat()
+    current_year = today_date.year
 
     system_prompt = f"""Sen foydalanuvchining shaxsiy AI-hisobchi va yordamchi botisan.
 
@@ -41,7 +43,13 @@ Agar xabar moliyaviy tranzaksiya (xarajat yoki daromad) bo'lsa:
 - "kategoriya": xarajat bo'lsa ushbu ro'yxatdan tanla: {', '.join(config.EXPENSE_CATEGORIES)}.
   Agar daromad bo'lsa ushbu ro'yxatdan tanla: {', '.join(config.INCOME_CATEGORIES)}.
 - "tavsif": xabarning qisqacha, tushunarli tavsifi (o'zbek tilida, 5-8 so'z)
-- "sana": agar xabarda aniq sana aytilmagan bo'lsa, bugungi sanani ishlat: {today}. Format: YYYY-MM-DD.
+- "sana": xabarda qanday sana ma'lumoti borligiga qarab aniqla, Format doim YYYY-MM-DD:
+  * Aniq kun va oy aytilgan bo'lsa (masalan "1-avgustda", "15 iyul kuni"), aynan o'sha kun-oyni ishlat.
+  * Faqat oy nomi aytilgan, kuni aytilmagan bo'lsa (masalan "iyun oyi", "iyundagi xarajatlar",
+    "may oyi rasxodlari", "fevral oyi"), o'sha oyning 1-kunini ishlat (masalan iyun uchun "YYYY-06-01").
+  * Yil aytilmagan bo'lsa, joriy yil {current_year} ni ishlat. Agar shunday hisoblangan sana
+    bugungi kundan ({today}) keyin (kelajakda) chiqib qolsa, o'tgan yilni ishlat.
+  * Xabarda sana yoki oy haqida hech qanday ma'lumot bo'lmasa, bugungi sanani ishlat: {today}.
 
 Agar xabar moliyaviy tranzaksiya BO'LMASA (masalan salomlashish, savol, umumiy suhbat, maslahat so'rash):
 - "is_transaction": false
