@@ -24,14 +24,17 @@ def _format_confirmation(data: dict) -> str:
 
 
 async def _process_transaction_text(update: Update, text: str) -> None:
-    data = ai_service.categorize_transaction(text)
+    data = ai_service.process_message(text)
 
     if not data:
         await update.message.reply_text(
-            "Bu xabarni moliyaviy tranzaksiya sifatida tushunolmadim. "
-            "Iltimos, xarajat yoki daromadni aniqroq yozing "
-            "(masalan: \"Taksiga 15000 so'm sarfladim\")."
+            "Bu xabarni tushunolmadim. Iltimos, boshqacha yozib ko'ring."
         )
+        return
+
+    if not data.get("is_transaction"):
+        javob = data.get("javob") or "Bu haqda aniq javob bera olmadim. Boshqacha so'rab ko'ring."
+        await update.message.reply_text(javob)
         return
 
     user = update.effective_user

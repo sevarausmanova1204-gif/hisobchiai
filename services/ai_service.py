@@ -25,22 +25,28 @@ def transcribe_voice(file_path: str) -> str:
     return result.text.strip()
 
 
-def categorize_transaction(text: str) -> dict | None:
+def process_message(text: str) -> dict | None:
     client = get_client()
     today = date.today().isoformat()
 
-    system_prompt = f"""Sen professional shaxsiy hisobchi (moliyaviy kotib) AI'san.
-Foydalanuvchi yuborgan xabarni tahlil qilib, bitta moliyaviy tranzaksiya sifatida JSON ko'rinishida qaytar.
+    system_prompt = f"""Sen foydalanuvchining shaxsiy AI-hisobchi va yordamchi botisan.
 
-Qoidalar:
-- "turi" maydoni faqat "Kirim" yoki "Chiqim" bo'lishi kerak.
-- "summa" faqat son (butun yoki kasr), valyuta belgisisiz.
-- "valyuta" odatda "so'm", agar boshqa valyuta aytilgan bo'lsa o'shani yoz (masalan "USD").
-- "kategoriya" xarajat bo'lsa ushbu ro'yxatdan tanla: {', '.join(config.EXPENSE_CATEGORIES)}.
+Foydalanuvchi yuborgan xabarni tahlil qil va JSON ko'rinishida javob qaytar.
+
+Agar xabar moliyaviy tranzaksiya (xarajat yoki daromad) bo'lsa:
+- "is_transaction": true
+- "turi": faqat "Kirim" yoki "Chiqim"
+- "summa": faqat son (butun yoki kasr), valyuta belgisisiz
+- "valyuta": odatda "so'm", agar boshqa valyuta aytilgan bo'lsa o'shani yoz (masalan "USD")
+- "kategoriya": xarajat bo'lsa ushbu ro'yxatdan tanla: {', '.join(config.EXPENSE_CATEGORIES)}.
   Agar daromad bo'lsa ushbu ro'yxatdan tanla: {', '.join(config.INCOME_CATEGORIES)}.
-- "tavsif" - xabarning qisqacha, tushunarli tavsifi (o'zbek tilida, 5-8 so'z).
-- "sana" - agar xabarda aniq sana aytilmagan bo'lsa, bugungi sanani ishlat: {today}. Format: YYYY-MM-DD.
-- Agar xabar moliyaviy tranzaksiya bo'lmasa (masalan salomlashish, savol), "is_transaction" ni false qil.
+- "tavsif": xabarning qisqacha, tushunarli tavsifi (o'zbek tilida, 5-8 so'z)
+- "sana": agar xabarda aniq sana aytilmagan bo'lsa, bugungi sanani ishlat: {today}. Format: YYYY-MM-DD.
+
+Agar xabar moliyaviy tranzaksiya BO'LMASA (masalan salomlashish, savol, umumiy suhbat, maslahat so'rash):
+- "is_transaction": false
+- "javob": foydalanuvchiga do'stona, foydali va aniq javob yoz (o'zbek tilida). Savolga to'g'ridan-to'g'ri javob ber,
+  umumiy suhbatlasha ol, lekin iloji bo'lsa moliyaviy mavzularda ko'proq yordam bera olishingni ham eslatib o't.
 
 Faqat quyidagi JSON formatida javob ber, boshqa hech narsa yozma:
 {{
@@ -50,7 +56,8 @@ Faqat quyidagi JSON formatida javob ber, boshqa hech narsa yozma:
   "valyuta": "so'm",
   "kategoriya": "...",
   "tavsif": "...",
-  "sana": "YYYY-MM-DD"
+  "sana": "YYYY-MM-DD",
+  "javob": "..."
 }}
 """
 
@@ -61,7 +68,7 @@ Faqat quyidagi JSON formatida javob ber, boshqa hech narsa yozma:
             {"role": "user", "content": text},
         ],
         response_format={"type": "json_object"},
-        temperature=0.1,
+        temperature=0.4,
     )
 
     content = response.choices[0].message.content
@@ -71,7 +78,7 @@ Faqat quyidagi JSON formatida javob ber, boshqa hech narsa yozma:
         return None
 
     if not data.get("is_transaction"):
-        return None
+        return {"is_transaction": False, "javob": data.get("javob") or ""}
 
     try:
         data["summa"] = float(data["summa"])
