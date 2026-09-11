@@ -157,6 +157,18 @@ def build_dashboard_image(
     total_chiqim = sum(r["summa"] for r in som_rows if r["turi"] == "Chiqim")
     umumiy_balans = total_kirim - total_chiqim
 
+    if month_filter:
+        if target_month_key[1] == 12:
+            period_end = date(target_month_key[0] + 1, 1, 1)
+        else:
+            period_end = date(target_month_key[0], target_month_key[1] + 1, 1)
+        cumulative_balans = sum(
+            r["summa"] if r["turi"] == "Kirim" else -r["summa"]
+            for r in som_rows if r["sana"] < period_end
+        )
+    else:
+        cumulative_balans = umumiy_balans
+
     def _month_totals(month_key):
         kirim = sum(
             r["summa"] for r in som_rows
@@ -229,33 +241,30 @@ def build_dashboard_image(
     davr_label = month_label_uz(*target_month_key) if month_filter else "Shu oy"
 
     ax1 = fig.add_subplot(gs[1, 0])
-    if month_filter:
-        _stat_card(
-            ax1, f"{davr_label} — balans", f"{_format_amount(davr_farq)} so'm", None, True,
-            sub_text="Kirim − Chiqim",
-        )
-    else:
-        _stat_card(
-            ax1, "Umumiy balans (barcha davr)", f"{_format_amount(umumiy_balans)} so'm", None, True,
-            sub_text="Kirim − Chiqim",
-        )
+    _stat_card(
+        ax1, "Umumiy balans", f"{_format_amount(cumulative_balans)} so'm", None, True,
+        sub_text="1-chi kundan buyon: Kirim − Chiqim",
+    )
 
     ax2 = fig.add_subplot(gs[1, 1])
     _stat_card(
         ax2, f"{davr_label} — sof balans", f"{_format_amount(davr_farq)} so'm",
         farq_pct, delta_good=(farq_pct is None or farq_pct >= 0),
+        sub_text="Faqat shu davr: Kirim − Chiqim",
     )
 
     ax3 = fig.add_subplot(gs[1, 2])
     _stat_card(
         ax3, f"{davr_label} — chiqim", f"{_format_amount(davr_chiqim)} so'm",
         chiqim_pct, delta_good=(chiqim_pct is None or chiqim_pct <= 0),
+        sub_text="Shu davrda sarflangan",
     )
 
     ax4 = fig.add_subplot(gs[1, 3])
     _stat_card(
         ax4, f"{davr_label} — daromad", f"{_format_amount(davr_kirim)} so'm",
         kirim_pct, delta_good=(kirim_pct is None or kirim_pct >= 0),
+        sub_text="Shu davrda tushgan",
     )
 
     ax_trend = fig.add_subplot(gs[2, 0:3])

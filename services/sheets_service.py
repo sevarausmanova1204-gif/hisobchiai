@@ -91,6 +91,46 @@ def delete_transaction(turi: str, row_number: int) -> None:
     worksheet.delete_rows(row_number)
 
 
+def _dedupe_worksheet(worksheet) -> int:
+    """Berilgan varaqda aynan bir xil (barcha ustunlari mos) takroriy qatorlarni
+    o'chiradi — har birining faqat birinchi uchragan nusxasini qoldiradi.
+    Nechta qator o'chirilganini qaytaradi."""
+    all_values = worksheet.get_all_values()
+    if len(all_values) <= 1:
+        return 0
+
+    data_rows = all_values[1:]
+    seen: set[tuple] = set()
+    rows_to_delete: list[int] = []
+    for idx, row in enumerate(data_rows, start=2):
+        key = tuple(row)
+        if key in seen:
+            rows_to_delete.append(idx)
+        else:
+            seen.add(key)
+
+    for row_num in sorted(rows_to_delete, reverse=True):
+        worksheet.delete_rows(row_num)
+
+    return len(rows_to_delete)
+
+
+def dedupe_all_sheets() -> dict[str, int]:
+    """"Tranzaksiyalar" (eski), "Kirim" va "Chiqim" varaqlaridagi aynan bir xil
+    takroriy qatorlarni tozalaydi. Har bir varaq uchun nechta qator
+    o'chirilganini lug'at ko'rinishida qaytaradi."""
+    results: dict[str, int] = {}
+
+    legacy = _get_legacy_worksheet()
+    if legacy is not None:
+        results[config.WORKSHEET_NAME] = _dedupe_worksheet(legacy)
+
+    for turi in ("Kirim", "Chiqim"):
+        results[turi] = _dedupe_worksheet(get_worksheet(turi))
+
+    return results
+
+
 def get_all_transactions(username: str | None = None) -> list[dict]:
     records: list[dict] = []
 
