@@ -38,17 +38,17 @@ async def spending_forecast(update: Update, context: ContextTypes.DEFAULT_TYPE) 
     forecast = forecast_service.compute_forecast(transactions)
     if not forecast["has_data"]:
         await update.message.reply_text(
-            "Hozircha bashorat qilish uchun xarajat tarixi yetarli emas."
+            "Hozircha prognoz qilish uchun xarajat tarixi yetarli emas."
         )
         return
 
     try:
         advice = ai_service.generate_spending_advice(forecast)
     except Exception:
-        logger.exception("Xarajat bashorati uchun maslahat yasashda xato")
+        logger.exception("Xarajat prognozi uchun maslahat yasashda xato")
         advice = None
 
-    lines = ["📈 <b>Xarajat bashorati va maslahat</b>\n"]
+    lines = ["📈 <b>Xarajat prognozi va maslahat</b>\n"]
     if advice:
         lines.append(advice + "\n")
 

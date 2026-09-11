@@ -5,7 +5,7 @@ BTN_BALANCE = "💼 Balans"
 BTN_DASHBOARD = "📈 Dashboard"
 BTN_SHEETS_DASHBOARD = "📄 Sheets Dashboard"
 BTN_ADVISOR = "🧠 AI Maslahatchi"
-BTN_FORECAST = "🔮 Xarajat bashorati"
+BTN_FORECAST = "🔮 Xarajat prognozi"
 BTN_HELP = "ℹ️ Yordam"
 
 INPUT_PLACEHOLDER = "Masalan: bugun taksiga 25 ming berdim"

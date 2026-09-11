@@ -43,7 +43,7 @@ def main() -> None:
     application.add_handler(CommandHandler("dashboard", dashboard.show_dashboard))
     application.add_handler(CommandHandler("sheetsdashboard", dashboard.show_sheets_dashboard))
     application.add_handler(CommandHandler("tozalash", maintenance.cleanup_duplicates))
-    application.add_handler(CommandHandler("bashorat", advisor.spending_forecast))
+    application.add_handler(CommandHandler("prognoz", advisor.spending_forecast))
 
     application.add_handler(MessageHandler(filters.Text([BTN_REPORT]), export.export_excel))
     application.add_handler(MessageHandler(filters.Text([BTN_BALANCE]), balance.show_balance))
