@@ -10,7 +10,14 @@ from telegram.ext import (
 
 import config
 from handlers import accountant, advisor, balance, cancel, common, dashboard, export
-from handlers.keyboard import BTN_ADVISOR, BTN_BALANCE, BTN_DASHBOARD, BTN_HELP, BTN_REPORT
+from handlers.keyboard import (
+    BTN_ADVISOR,
+    BTN_BALANCE,
+    BTN_DASHBOARD,
+    BTN_HELP,
+    BTN_REPORT,
+    BTN_SHEETS_DASHBOARD,
+)
 
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
@@ -33,10 +40,14 @@ def main() -> None:
     application.add_handler(CommandHandler("excel", export.export_excel))
     application.add_handler(CommandHandler("balans", balance.show_balance))
     application.add_handler(CommandHandler("dashboard", dashboard.show_dashboard))
+    application.add_handler(CommandHandler("sheetsdashboard", dashboard.show_sheets_dashboard))
 
     application.add_handler(MessageHandler(filters.Text([BTN_REPORT]), export.export_excel))
     application.add_handler(MessageHandler(filters.Text([BTN_BALANCE]), balance.show_balance))
     application.add_handler(MessageHandler(filters.Text([BTN_DASHBOARD]), dashboard.show_dashboard))
+    application.add_handler(
+        MessageHandler(filters.Text([BTN_SHEETS_DASHBOARD]), dashboard.show_sheets_dashboard)
+    )
     application.add_handler(MessageHandler(filters.Text([BTN_ADVISOR]), common.advisor_prompt))
     application.add_handler(MessageHandler(filters.Text([BTN_HELP]), common.help_command))
 

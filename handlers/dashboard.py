@@ -7,7 +7,7 @@ from telegram.ext import ContextTypes
 
 import config
 from handlers.access import restricted
-from services import dashboard_service, sheets_service
+from services import dashboard_service, sheets_dashboard_service, sheets_service
 
 logger = logging.getLogger(__name__)
 
@@ -92,3 +92,34 @@ async def send_period_dashboard(update: Update, context: ContextTypes.DEFAULT_TY
             )
 
     await query.edit_message_text(f"📈 {period_label} uchun dashboard yuborildi.")
+
+
+@restricted
+async def show_sheets_dashboard(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    await update.message.chat.send_action("typing")
+
+    try:
+        transactions = sheets_service.get_all_transactions()
+    except Exception:
+        logger.exception("Google Sheets'dan ma'lumot olishda xato")
+        await update.message.reply_text(
+            "Google Sheets bilan bog'lanishda xatolik yuz berdi. Sozlamalarni tekshiring."
+        )
+        return
+
+    if not transactions:
+        await update.message.reply_text("Hozircha hech qanday yozuv mavjud emas.")
+        return
+
+    try:
+        url = sheets_dashboard_service.build_sheets_dashboard(transactions)
+    except Exception:
+        logger.exception("Sheets dashboardini yasashda xato")
+        await update.message.reply_text(
+            "Google Sheets'da dashboard yasashda xatolik yuz berdi. Birozdan so'ng qayta urinib ko'ring."
+        )
+        return
+
+    await update.message.reply_text(
+        f"📄 Google Sheets'da \"Dashboard\" varag'i yangilandi:\n{url}"
+    )

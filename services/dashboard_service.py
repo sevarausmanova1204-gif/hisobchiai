@@ -6,6 +6,7 @@ import matplotlib
 matplotlib.use("Agg")
 
 import matplotlib.pyplot as plt
+import matplotlib.ticker as mticker
 from matplotlib.patches import FancyBboxPatch
 
 _BG = "#EEECFB"
@@ -55,6 +56,19 @@ def _format_amount(amount: float) -> str:
     return f"{amount:,.0f}".replace(",", " ")
 
 
+def _format_axis_amount(value: float, _pos=None) -> str:
+    """Grafik o'qlari uchun tushunarli format: ilmiy (1e7) emas, "10 mln" kabi."""
+    v = abs(value)
+    sign = "-" if value < 0 else ""
+    if v >= 1_000_000:
+        text = f"{v / 1_000_000:g} mln"
+    elif v >= 1_000:
+        text = f"{v / 1_000:g} ming"
+    else:
+        text = f"{v:g}"
+    return f"{sign}{text}"
+
+
 def _card(ax, bg=_CARD):
     ax.set_xlim(0, 1)
     ax.set_ylim(0, 1)
@@ -68,16 +82,28 @@ def _card(ax, bg=_CARD):
     )
 
 
-def _stat_card(ax, label: str, value_text: str, delta_text: str | None, delta_positive: bool):
+def _stat_card(
+    ax, label: str, value_text: str, delta_pct: float | None,
+    delta_good: bool = True, sub_text: str | None = None,
+):
+    """delta_pct ishorasi strelka yo'nalishini (▲/▼) belgilaydi — bu haqiqiy o'zgarish
+    yo'nalishi. delta_good esa rangni (yashil/qizil) belgilaydi — bu metrika uchun
+    o'sish yaxshimi yomonmi (masalan chiqim oshishi yomon, shuning uchun rang qizil
+    bo'ladi, lekin strelka baribir ▲ bo'lib qoladi, chunki chiqim haqiqatan oshgan)."""
     _card(ax)
-    ax.text(0.12, 0.68, label, fontsize=11, color=_MUTED, transform=ax.transAxes, va="center")
-    ax.text(0.12, 0.42, value_text, fontsize=19, color=_TEXT, weight="bold",
+    ax.text(0.12, 0.70, label, fontsize=11, color=_MUTED, transform=ax.transAxes, va="center")
+    ax.text(0.12, 0.44, value_text, fontsize=18, color=_TEXT, weight="bold",
             transform=ax.transAxes, va="center")
-    if delta_text:
-        color = _GREEN if delta_positive else _RED
-        arrow = "▲" if delta_positive else "▼"
-        ax.text(0.12, 0.20, f"{arrow} {delta_text}", fontsize=10, color=color,
-                transform=ax.transAxes, va="center", weight="bold")
+    if delta_pct is not None:
+        color = _GREEN if delta_good else _RED
+        arrow = "▲" if delta_pct >= 0 else "▼"
+        direction = "ko'p" if delta_pct >= 0 else "kam"
+        ax.text(
+            0.12, 0.22, f"{arrow} {abs(delta_pct):.0f}% oldingi oydan {direction}",
+            fontsize=9.5, color=color, transform=ax.transAxes, va="center", weight="bold",
+        )
+    if sub_text:
+        ax.text(0.12, 0.10, sub_text, fontsize=8, color=_MUTED, transform=ax.transAxes, va="center")
 
 
 def list_available_months(transactions: list[dict]) -> list[tuple[int, int]]:
@@ -204,29 +230,32 @@ def build_dashboard_image(
 
     ax1 = fig.add_subplot(gs[1, 0])
     if month_filter:
-        _stat_card(ax1, f"{davr_label} — balans", f"{_format_amount(davr_farq)} so'm", None, True)
+        _stat_card(
+            ax1, f"{davr_label} — balans", f"{_format_amount(davr_farq)} so'm", None, True,
+            sub_text="Kirim − Chiqim",
+        )
     else:
-        _stat_card(ax1, "Umumiy balans", f"{_format_amount(umumiy_balans)} so'm", None, True)
+        _stat_card(
+            ax1, "Umumiy balans (barcha davr)", f"{_format_amount(umumiy_balans)} so'm", None, True,
+            sub_text="Kirim − Chiqim",
+        )
 
     ax2 = fig.add_subplot(gs[1, 1])
     _stat_card(
-        ax2, f"{davr_label} — farq", f"{_format_amount(davr_farq)} so'm",
-        f"{abs(farq_pct):.0f}% oldingi oyga" if farq_pct is not None else None,
-        farq_pct is not None and farq_pct >= 0,
+        ax2, f"{davr_label} — sof balans", f"{_format_amount(davr_farq)} so'm",
+        farq_pct, delta_good=(farq_pct is None or farq_pct >= 0),
     )
 
     ax3 = fig.add_subplot(gs[1, 2])
     _stat_card(
         ax3, f"{davr_label} — chiqim", f"{_format_amount(davr_chiqim)} so'm",
-        f"{abs(chiqim_pct):.0f}% oldingi oyga" if chiqim_pct is not None else None,
-        chiqim_pct is not None and chiqim_pct <= 0,
+        chiqim_pct, delta_good=(chiqim_pct is None or chiqim_pct <= 0),
     )
 
     ax4 = fig.add_subplot(gs[1, 3])
     _stat_card(
         ax4, f"{davr_label} — daromad", f"{_format_amount(davr_kirim)} so'm",
-        f"{abs(kirim_pct):.0f}% oldingi oyga" if kirim_pct is not None else None,
-        kirim_pct is not None and kirim_pct >= 0,
+        kirim_pct, delta_good=(kirim_pct is None or kirim_pct >= 0),
     )
 
     ax_trend = fig.add_subplot(gs[2, 0:3])
@@ -242,6 +271,7 @@ def build_dashboard_image(
         inner.spines[["top", "right", "left"]].set_visible(False)
         inner.tick_params(axis="x", labelsize=8, colors=_MUTED, rotation=30)
         inner.tick_params(axis="y", labelsize=8, colors=_MUTED)
+        inner.yaxis.set_major_formatter(mticker.FuncFormatter(_format_axis_amount))
         inner.set_facecolor(_CARD)
         inner.grid(axis="y", color="#E4E1F5", linewidth=0.8)
     else:
@@ -304,6 +334,7 @@ def build_dashboard_image(
         inner.set_xticks(list(x))
         inner.set_xticklabels(labels, fontsize=9, color=_MUTED)
         inner.tick_params(axis="y", labelsize=8, colors=_MUTED)
+        inner.yaxis.set_major_formatter(mticker.FuncFormatter(_format_axis_amount))
         inner.spines[["top", "right", "left"]].set_visible(False)
         inner.set_facecolor(_CARD)
         inner.grid(axis="y", color="#E4E1F5", linewidth=0.8)
@@ -314,13 +345,15 @@ def build_dashboard_image(
         ax_bar.text(0.5, 0.5, "Hozircha ma'lumot yo'q", ha="center", va="center",
                      color=_MUTED, transform=ax_bar.transAxes)
 
+    footnote = (
+        "* Balans faqat botga yozib qo'ygan Kirim/Chiqim yozuvlaringiz asosida hisoblanadi."
+    )
     if other_currency_count:
-        fig.text(
-            0.045, 0.008,
-            f"* Dashboard faqat so'm tranzaksiyalarini hisoblaydi "
-            f"({other_currency_count} ta boshqa valyutadagi yozuv kiritilmadi).",
-            fontsize=8, color=_MUTED,
+        footnote += (
+            f" Bundan tashqari, {other_currency_count} ta so'mdan boshqa valyutadagi "
+            f"yozuv bu hisobga kiritilmadi."
         )
+    fig.text(0.045, 0.008, footnote, fontsize=8, color=_MUTED)
 
     fig.savefig(filepath, facecolor=_BG, dpi=170)
     plt.close(fig)

@@ -24,12 +24,13 @@ HELP_TEXT = """<b>Buyruqlar</b>
 /help — yordam
 /excel — barcha moliyaviy yozuvlaringizni Excel fayl ko'rinishida yuklab olish
 /balans — kirim, chiqim va joriy balansni ko'rish
-/dashboard — moliyaviy holatingiz bo'yicha vizual dashboard (rasm)
+/dashboard — moliyaviy holatingiz bo'yicha vizual dashboard (rasm), davr tanlab
+/sheetsdashboard — Google Sheets ichida jadval va diagrammalardan iborat "Dashboard" varag'ini yaratadi/yangilaydi
 
 <b>Qanday ishlatiladi</b>
 1. Xarajat yoki daromadingizni matn yoki ovozli xabar orqali yozing — bot buni avtomatik kategoriyalab, Google Sheets-dagi Kirim yoki Chiqim varag'iga saqlaydi.
 2. Istalgan hujjatni (PDF/DOCX/XLSX/TXT) yuboring — bot professional tahlilchi sifatida chuqur tahlil qilib javob beradi.
-3. Pastdagi tugmalardan ham foydalanishingiz mumkin: 📊 Hisobot, 💼 Balans, 📈 Dashboard, 🧠 AI Maslahatchi, ℹ️ Yordam."""
+3. Pastdagi tugmalardan ham foydalanishingiz mumkin: 📊 Hisobot, 💼 Balans, 📈 Dashboard, 📄 Sheets Dashboard, 🧠 AI Maslahatchi, ℹ️ Yordam."""
 
 ADVISOR_PROMPT_TEXT = """🧠 <b>AI Maslahatchi</b>
 
