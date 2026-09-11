@@ -91,51 +91,44 @@ def delete_transaction(turi: str, row_number: int) -> None:
     worksheet.delete_rows(row_number)
 
 
-def _dedupe_worksheet(worksheet) -> int:
-    """Berilgan varaqda aynan bir xil (barcha ustunlari mos) takroriy qatorlarni
-    o'chiradi — har birining faqat birinchi uchragan nusxasini qoldiradi.
-    Nechta qator o'chirilganini qaytaradi.
-
-    get_all_records() ishlatiladi (raw get_all_values() emas), chunki bir xil
-    qiymat sonli katakda turlicha ko'rinishda saqlangan bo'lishi mumkin
-    (masalan "900000" va "900000.0") — get_all_records() bularni bir xil
-    Python qiymatiga aylantirib, taqqoslashni ishonchli qiladi."""
-    records = worksheet.get_all_records()
-    if not records:
-        return 0
-
-    def _normalize(value):
-        if isinstance(value, (int, float)):
-            return round(float(value), 6)
-        return str(value).strip()
-
-    seen: set[tuple] = set()
-    rows_to_delete: list[int] = []
-    for idx, record in enumerate(records, start=2):
-        key = tuple(_normalize(v) for v in record.values())
-        if key in seen:
-            rows_to_delete.append(idx)
-        else:
-            seen.add(key)
-
-    for row_num in sorted(rows_to_delete, reverse=True):
-        worksheet.delete_rows(row_num)
-
-    return len(rows_to_delete)
+def _normalize_value(value):
+    if isinstance(value, (int, float)):
+        return round(float(value), 6)
+    return str(value).strip()
 
 
 def dedupe_all_sheets() -> dict[str, int]:
-    """"Tranzaksiyalar" (eski), "Kirim" va "Chiqim" varaqlaridagi aynan bir xil
-    takroriy qatorlarni tozalaydi. Har bir varaq uchun nechta qator
-    o'chirilganini lug'at ko'rinishida qaytaradi."""
-    results: dict[str, int] = {}
-
+    """"Tranzaksiyalar" (eski), "Kirim" va "Chiqim" varaqlarini BIRGALIKDA
+    tekshiradi va aynan bir xil (barcha ustunlari mos) takroriy qatorlarni
+    o'chiradi — har bir noyob qatorning faqat birinchi uchragan nusxasini
+    qoldiradi. Bu nafaqat bitta varaq ICHIDAGI, balki varaqlar ORASIDAGI
+    takrorlarni ham topadi (masalan "Chiqim" varag'i "Tranzaksiyalar"
+    varag'idagi eski yozuvlarning nusxasi bo'lib qolgan holatlar uchun).
+    Har bir varaq uchun nechta qator o'chirilganini lug'at qilib qaytaradi."""
+    sheets: list[tuple[str, object]] = []
     legacy = _get_legacy_worksheet()
     if legacy is not None:
-        results[config.WORKSHEET_NAME] = _dedupe_worksheet(legacy)
+        sheets.append((config.WORKSHEET_NAME, legacy))
+    sheets.append(("Kirim", get_worksheet("Kirim")))
+    sheets.append(("Chiqim", get_worksheet("Chiqim")))
 
-    for turi in ("Kirim", "Chiqim"):
-        results[turi] = _dedupe_worksheet(get_worksheet(turi))
+    seen: set[tuple] = set()
+    results: dict[str, int] = {}
+
+    for name, worksheet in sheets:
+        records = worksheet.get_all_records()
+        rows_to_delete: list[int] = []
+        for idx, record in enumerate(records, start=2):
+            key = tuple(_normalize_value(v) for v in record.values())
+            if key in seen:
+                rows_to_delete.append(idx)
+            else:
+                seen.add(key)
+
+        for row_num in sorted(rows_to_delete, reverse=True):
+            worksheet.delete_rows(row_num)
+
+        results[name] = len(rows_to_delete)
 
     return results
 
