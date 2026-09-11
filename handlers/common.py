@@ -17,6 +17,9 @@ Men uni avtomatik tahlil qilib, kerakli bo'limga ajratib Google Sheets jadvaliga
 📄 <b>AI-maslahatchi funksiyasi</b>
 Har qanday hujjat (PDF, Word, Excel, TXT) yuboring — men uni professional tahlilchi sifatida chuqur tahlil qilib beraman.
 
+🔮 <b>Xarajat bashorati</b>
+/bashorat — o'tgan oylardagi va doimiy takrorlanuvchi xarajatlaringizni o'rganib, maslahat beraman va kelasi 1/3/5/9/12 oy uchun taxminiy xarajatni hisoblab beraman.
+
 Yordam uchun: /help"""
 
 HELP_TEXT = """<b>Buyruqlar</b>
@@ -26,15 +29,19 @@ HELP_TEXT = """<b>Buyruqlar</b>
 /balans — kirim, chiqim va joriy balansni ko'rish
 /dashboard — moliyaviy holatingiz bo'yicha vizual dashboard (rasm), davr tanlab
 /sheetsdashboard — Google Sheets ichida jadval va diagrammalardan iborat "Dashboard" varag'ini yaratadi/yangilaydi
+/bashorat — o'tgan oylar va doimiy xarajatlaringiz asosida maslahat va 1/3/5/9/12 oylik xarajat bashorati
+/tozalash — Google Sheets'dagi aynan bir xil takroriy yozuvlarni tozalaydi
 
 <b>Qanday ishlatiladi</b>
 1. Xarajat yoki daromadingizni matn yoki ovozli xabar orqali yozing — bot buni avtomatik kategoriyalab, Google Sheets-dagi Kirim yoki Chiqim varag'iga saqlaydi.
 2. Istalgan hujjatni (PDF/DOCX/XLSX/TXT) yuboring — bot professional tahlilchi sifatida chuqur tahlil qilib javob beradi.
-3. Pastdagi tugmalardan ham foydalanishingiz mumkin: 📊 Hisobot, 💼 Balans, 📈 Dashboard, 📄 Sheets Dashboard, 🧠 AI Maslahatchi, ℹ️ Yordam."""
+3. Pastdagi tugmalardan ham foydalanishingiz mumkin: 📊 Hisobot, 💼 Balans, 📈 Dashboard, 📄 Sheets Dashboard, 🧠 AI Maslahatchi, 🔮 Xarajat bashorati, ℹ️ Yordam."""
 
 ADVISOR_PROMPT_TEXT = """🧠 <b>AI Maslahatchi</b>
 
-Tahlil qilinishi kerak bo'lgan hujjatni (PDF, DOCX, XLSX, TXT yoki CSV) shu chatga yuboring — men uni professional tahlilchi sifatida chuqur tahlil qilib, tuzilgan xulosa qaytaraman."""
+Tahlil qilinishi kerak bo'lgan hujjatni (PDF, DOCX, XLSX, TXT yoki CSV) shu chatga yuboring — men uni professional tahlilchi sifatida chuqur tahlil qilib, tuzilgan xulosa qaytaraman.
+
+💡 Buning o'rniga o'tgan oylardagi xarajatlaringiz asosida maslahat va kelajak xarajat bashoratini olmoqchi bo'lsangiz: /bashorat"""
 
 
 @restricted

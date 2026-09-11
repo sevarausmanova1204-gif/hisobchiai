@@ -14,6 +14,7 @@ from handlers.keyboard import (
     BTN_ADVISOR,
     BTN_BALANCE,
     BTN_DASHBOARD,
+    BTN_FORECAST,
     BTN_HELP,
     BTN_REPORT,
     BTN_SHEETS_DASHBOARD,
@@ -42,6 +43,7 @@ def main() -> None:
     application.add_handler(CommandHandler("dashboard", dashboard.show_dashboard))
     application.add_handler(CommandHandler("sheetsdashboard", dashboard.show_sheets_dashboard))
     application.add_handler(CommandHandler("tozalash", maintenance.cleanup_duplicates))
+    application.add_handler(CommandHandler("bashorat", advisor.spending_forecast))
 
     application.add_handler(MessageHandler(filters.Text([BTN_REPORT]), export.export_excel))
     application.add_handler(MessageHandler(filters.Text([BTN_BALANCE]), balance.show_balance))
@@ -50,6 +52,7 @@ def main() -> None:
         MessageHandler(filters.Text([BTN_SHEETS_DASHBOARD]), dashboard.show_sheets_dashboard)
     )
     application.add_handler(MessageHandler(filters.Text([BTN_ADVISOR]), common.advisor_prompt))
+    application.add_handler(MessageHandler(filters.Text([BTN_FORECAST]), advisor.spending_forecast))
     application.add_handler(MessageHandler(filters.Text([BTN_HELP]), common.help_command))
 
     application.add_handler(MessageHandler(filters.Document.ALL, advisor.handle_document))

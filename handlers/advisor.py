@@ -6,16 +6,66 @@ from telegram import Update
 from telegram.ext import ContextTypes
 
 from handlers.access import restricted
-from services import ai_service, document_service
+from services import ai_service, document_service, forecast_service, sheets_service
 
 logger = logging.getLogger(__name__)
 
 TELEGRAM_MAX_LEN = 4000
 
 
+def _format_amount(amount: float) -> str:
+    return f"{amount:,.0f}".replace(",", " ")
+
+
 async def _send_long_message(update: Update, text: str) -> None:
     for i in range(0, len(text), TELEGRAM_MAX_LEN):
         await update.message.reply_text(text[i : i + TELEGRAM_MAX_LEN])
+
+
+@restricted
+async def spending_forecast(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    await update.message.chat.send_action("typing")
+
+    try:
+        transactions = sheets_service.get_all_transactions()
+    except Exception:
+        logger.exception("Google Sheets'dan ma'lumot olishda xato")
+        await update.message.reply_text(
+            "Google Sheets bilan bog'lanishda xatolik yuz berdi. Sozlamalarni tekshiring."
+        )
+        return
+
+    forecast = forecast_service.compute_forecast(transactions)
+    if not forecast["has_data"]:
+        await update.message.reply_text(
+            "Hozircha bashorat qilish uchun xarajat tarixi yetarli emas."
+        )
+        return
+
+    try:
+        advice = ai_service.generate_spending_advice(forecast)
+    except Exception:
+        logger.exception("Xarajat bashorati uchun maslahat yasashda xato")
+        advice = None
+
+    lines = ["📈 <b>Xarajat bashorati va maslahat</b>\n"]
+    if advice:
+        lines.append(advice + "\n")
+
+    if forecast["recurring"]:
+        lines.append("<b>Doimiy xarajatlaringiz</b>")
+        for r in forecast["recurring"][:6]:
+            lines.append(f"  • {r['name']}: {_format_amount(r['avg'])} so'm/oy")
+        lines.append("")
+
+    lines.append(
+        f"<b>Taxminiy kelajak xarajatlari</b> "
+        f"(oxirgi {forecast['months_used']} oylik o'rtacha — {_format_amount(forecast['avg_monthly'])} so'm/oy — asosida):"
+    )
+    for h in forecast_service.HORIZONS:
+        lines.append(f"  • {h} oylik: {_format_amount(forecast['forecasts'][h])} so'm")
+
+    await update.message.reply_html("\n".join(lines))
 
 
 @restricted

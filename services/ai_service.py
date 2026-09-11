@@ -96,6 +96,40 @@ Faqat quyidagi JSON formatida javob ber, boshqa hech narsa yozma:
     return data
 
 
+def generate_spending_advice(forecast: dict) -> str:
+    client = get_client()
+
+    recurring_lines = "\n".join(
+        f"- {r['name']}: o'rtacha {r['avg']:,.0f} so'm/oy ({r['months']} oyda uchragan)".replace(",", " ")
+        for r in forecast["recurring"]
+    ) or "(doimiy takrorlanuvchi xarajat aniqlanmadi)"
+
+    prompt = f"""Foydalanuvchining oxirgi {forecast['months_used']} oylik xarajat tarixi tahlil qilindi.
+
+O'rtacha oylik xarajat: {forecast['avg_monthly']:,.0f} so'm
+Oxirgi oy ({forecast['last_month_label']}) xarajati: {forecast['last_month_total']:,.0f} so'm
+
+Doimiy/takrorlanuvchi xarajatlar (2 yoki undan ko'p oyda uchragan):
+{recurring_lines}
+
+Sen professional moliyaviy maslahatchisan. Yuqoridagi ma'lumotlar asosida o'zbek tilida,
+foydalanuvchiga qisqa (120-180 so'z) va aniq maslahat ber:
+- qanday doimiy/takrorlanuvchi xarajatlari borligini eslatib o't va ular umumiy xarajatning
+  qanchasini tashkil qilishini taxminan bahola;
+- tejash imkoniyati bor joylarni (agar ko'zga tashlansa) aniq taklif qil;
+- xarajat tendensiyasi (oshyaptimi, kamayyaptimi yoki barqarormi) haqida qisqa fikr bildir.
+Faqat matn yoz, sarlavha yoki ro'yxat belgilaridan ortiqcha foydalanma — tabiiy, suhbat
+uslubida yoz. Raqamlarni takrorlashda bo'shliq bilan ajratilgan formatdan foydalan
+(masalan "1 200 000 so'm")."""
+
+    response = client.chat.completions.create(
+        model=config.OPENAI_TEXT_MODEL,
+        messages=[{"role": "user", "content": prompt}],
+        temperature=0.5,
+    )
+    return response.choices[0].message.content.strip()
+
+
 def analyze_document(document_text: str, filename: str) -> str:
     client = get_client()
 
