@@ -94,16 +94,25 @@ def delete_transaction(turi: str, row_number: int) -> None:
 def _dedupe_worksheet(worksheet) -> int:
     """Berilgan varaqda aynan bir xil (barcha ustunlari mos) takroriy qatorlarni
     o'chiradi — har birining faqat birinchi uchragan nusxasini qoldiradi.
-    Nechta qator o'chirilganini qaytaradi."""
-    all_values = worksheet.get_all_values()
-    if len(all_values) <= 1:
+    Nechta qator o'chirilganini qaytaradi.
+
+    get_all_records() ishlatiladi (raw get_all_values() emas), chunki bir xil
+    qiymat sonli katakda turlicha ko'rinishda saqlangan bo'lishi mumkin
+    (masalan "900000" va "900000.0") — get_all_records() bularni bir xil
+    Python qiymatiga aylantirib, taqqoslashni ishonchli qiladi."""
+    records = worksheet.get_all_records()
+    if not records:
         return 0
 
-    data_rows = all_values[1:]
+    def _normalize(value):
+        if isinstance(value, (int, float)):
+            return round(float(value), 6)
+        return str(value).strip()
+
     seen: set[tuple] = set()
     rows_to_delete: list[int] = []
-    for idx, row in enumerate(data_rows, start=2):
-        key = tuple(row)
+    for idx, record in enumerate(records, start=2):
+        key = tuple(_normalize(v) for v in record.values())
         if key in seen:
             rows_to_delete.append(idx)
         else:
