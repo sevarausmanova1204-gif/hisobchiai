@@ -3,6 +3,11 @@ from datetime import datetime
 
 HORIZONS = (1, 3, 5, 9, 12)
 
+# "Boshqa xarajatlar" — bu turli-tuman, bir-biriga bog'liq bo'lmagan bir martalik
+# xarajatlar uchun umumiy kategoriya, shuning uchun u hech qachon "doimiy xarajat"
+# sifatida ko'rsatilmaydi (har oy boshqa-boshqa narsalar bo'lishi mumkin).
+_EXCLUDED_RECURRING_CATEGORIES = {"Boshqa xarajatlar", "Boshqa"}
+
 _MONTHS_UZ_FULL = {
     1: "Yanvar", 2: "Fevral", 3: "Mart", 4: "Aprel", 5: "May", 6: "Iyun",
     7: "Iyul", 8: "Avgust", 9: "Sentyabr", 10: "Oktyabr", 11: "Noyabr", 12: "Dekabr",
@@ -30,7 +35,7 @@ def _parse_date(value):
     return None
 
 
-def compute_forecast(transactions: list[dict], recurring_min_months: int = 2) -> dict:
+def compute_forecast(transactions: list[dict], recurring_ratio: float = 0.6) -> dict:
     """Chiqim tarixini tahlil qilib, doimiy xarajatlarni va kelajakdagi
     (1/3/5/9/12 oylik) taxminiy xarajatlarni hisoblaydi. Faqat so'm
     tranzaksiyalari hisobga olinadi (oxirgi 12 oylik ma'lumot asosida)."""
@@ -72,25 +77,39 @@ def compute_forecast(transactions: list[dict], recurring_min_months: int = 2) ->
     # xarajatlar" kabi), bu esa aslida bitta doimiy xarajatni ikkita alohida
     # qatorga bo'lib yuborardi. Kategoriya barqaror ro'yxatdan tanlangani uchun
     # ishonchliroq guruhlash mezoni.
-    by_category: dict[str, dict] = defaultdict(lambda: {"months": set(), "total": 0.0, "examples": []})
+    #
+    # Faqat OXIRGI OYLAR OYNASI (avg_monthly hisoblangan davr) ichidagi va
+    # ko'pchilik oylarda (recurring_ratio) takrorlangan kategoriyalar "doimiy
+    # xarajat" deb hisoblanadi — bitta-ikkita marta tasodifan boshqa-boshqa
+    # oyda uchragan bir martalik xaridlar (masalan turli kurslar) doimiy
+    # xarajat sifatida ko'rsatilmasligi kerak. "Boshqa xarajatlar" kabi
+    # aralash kategoriyalar umuman hisobga olinmaydi.
+    recent_keys_set = set(recent_keys)
+    by_category: dict[str, dict] = defaultdict(lambda: {"month_totals": {}, "examples": []})
     for r in rows:
         key = (r["sana"].year, r["sana"].month)
+        if key not in recent_keys_set or r["kategoriya"] in _EXCLUDED_RECURRING_CATEGORIES:
+            continue
         info = by_category[r["kategoriya"]]
-        info["months"].add(key)
-        info["total"] += r["summa"]
+        info["month_totals"][key] = info["month_totals"].get(key, 0.0) + r["summa"]
         if r["tavsif"] and r["tavsif"] not in info["examples"]:
             info["examples"].append(r["tavsif"])
 
-    recurring = [
-        {
-            "name": kategoriya,
-            "example": info["examples"][0] if info["examples"] else kategoriya,
-            "months": len(info["months"]),
-            "avg": info["total"] / len(info["months"]),
-        }
-        for kategoriya, info in by_category.items()
-        if len(info["months"]) >= recurring_min_months
-    ]
+    min_months_required = max(2, round(len(recent_keys) * recurring_ratio))
+
+    recurring = []
+    for kategoriya, info in by_category.items():
+        amounts = list(info["month_totals"].values())
+        if len(amounts) < min_months_required:
+            continue
+        recurring.append(
+            {
+                "name": kategoriya,
+                "example": info["examples"][0] if info["examples"] else kategoriya,
+                "months": len(amounts),
+                "avg": sum(amounts) / len(amounts),
+            }
+        )
     recurring.sort(key=lambda x: x["avg"], reverse=True)
 
     forecasts = {h: avg_monthly * h for h in HORIZONS}
