@@ -55,7 +55,8 @@ async def spending_forecast(update: Update, context: ContextTypes.DEFAULT_TYPE) 
     if forecast["recurring"]:
         lines.append("<b>Doimiy xarajatlaringiz</b>")
         for r in forecast["recurring"][:6]:
-            lines.append(f"  • {r['name']}: {_format_amount(r['avg'])} so'm/oy")
+            example = f" ({r['example']})" if r["example"] and r["example"] != r["name"] else ""
+            lines.append(f"  • {r['name']}{example}: {_format_amount(r['avg'])} so'm/oy")
         lines.append("")
 
     lines.append(

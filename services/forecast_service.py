@@ -67,16 +67,28 @@ def compute_forecast(transactions: list[dict], recurring_min_months: int = 2) ->
 
     last_key = month_keys[-1]
 
-    by_name: dict[str, dict] = defaultdict(lambda: {"months": set(), "total": 0.0})
+    # Kategoriya bo'yicha guruhlanadi (Tavsif emas) — chunki AI har safar tavsifni
+    # biroz boshqacha so'zlar bilan yozadi ("Sport uchun xarajat" / "Sport uchun
+    # xarajatlar" kabi), bu esa aslida bitta doimiy xarajatni ikkita alohida
+    # qatorga bo'lib yuborardi. Kategoriya barqaror ro'yxatdan tanlangani uchun
+    # ishonchliroq guruhlash mezoni.
+    by_category: dict[str, dict] = defaultdict(lambda: {"months": set(), "total": 0.0, "examples": []})
     for r in rows:
         key = (r["sana"].year, r["sana"].month)
-        info = by_name[r["tavsif"]]
+        info = by_category[r["kategoriya"]]
         info["months"].add(key)
         info["total"] += r["summa"]
+        if r["tavsif"] and r["tavsif"] not in info["examples"]:
+            info["examples"].append(r["tavsif"])
 
     recurring = [
-        {"name": name, "months": len(info["months"]), "avg": info["total"] / len(info["months"])}
-        for name, info in by_name.items()
+        {
+            "name": kategoriya,
+            "example": info["examples"][0] if info["examples"] else kategoriya,
+            "months": len(info["months"]),
+            "avg": info["total"] / len(info["months"]),
+        }
+        for kategoriya, info in by_category.items()
         if len(info["months"]) >= recurring_min_months
     ]
     recurring.sort(key=lambda x: x["avg"], reverse=True)

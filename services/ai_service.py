@@ -100,7 +100,8 @@ def generate_spending_advice(forecast: dict) -> str:
     client = get_client()
 
     recurring_lines = "\n".join(
-        f"- {r['name']}: o'rtacha {r['avg']:,.0f} so'm/oy ({r['months']} oyda uchragan)".replace(",", " ")
+        f"- {r['name']} ({r['example']}): o'rtacha {r['avg']:,.0f} so'm/oy "
+        f"({r['months']} oyda uchragan)".replace(",", " ")
         for r in forecast["recurring"]
     ) or "(doimiy takrorlanuvchi xarajat aniqlanmadi)"
 
