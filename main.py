@@ -47,6 +47,9 @@ def main() -> None:
     application.add_handler(
         CallbackQueryHandler(cancel.cancel_transaction, pattern=r"^cancel_tx:(Kirim|Chiqim):\d+$")
     )
+    application.add_handler(
+        CallbackQueryHandler(dashboard.send_period_dashboard, pattern=r"^dashp:")
+    )
 
     logger.info("Bot ishga tushdi...")
     application.run_polling(allowed_updates=None)

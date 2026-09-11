@@ -24,6 +24,15 @@ _MONTHS_UZ = {
     7: "Iyul", 8: "Avg", 9: "Sen", 10: "Okt", 11: "Noy", 12: "Dek",
 }
 
+_MONTHS_UZ_FULL = {
+    1: "Yanvar", 2: "Fevral", 3: "Mart", 4: "Aprel", 5: "May", 6: "Iyun",
+    7: "Iyul", 8: "Avgust", 9: "Sentyabr", 10: "Oktyabr", 11: "Noyabr", 12: "Dekabr",
+}
+
+
+def month_label_uz(year: int, month: int) -> str:
+    return f"{_MONTHS_UZ_FULL[month]} {year}"
+
 
 def _safe_float(value) -> float:
     try:
@@ -71,7 +80,19 @@ def _stat_card(ax, label: str, value_text: str, delta_text: str | None, delta_po
                 transform=ax.transAxes, va="center", weight="bold")
 
 
-def build_dashboard_image(transactions: list[dict], filepath: str) -> str:
+def list_available_months(transactions: list[dict]) -> list[tuple[int, int]]:
+    """Ma'lumotlarda uchraydigan (yil, oy) juftliklarini xronologik tartibda qaytaradi."""
+    months: set[tuple[int, int]] = set()
+    for row in transactions:
+        d = _parse_date(row.get("Sana"))
+        if d is not None:
+            months.add((d.year, d.month))
+    return sorted(months)
+
+
+def build_dashboard_image(
+    transactions: list[dict], filepath: str, month_filter: tuple[int, int] | None = None
+) -> str:
     som_rows = []
     other_currency_count = 0
     for row in transactions:
@@ -93,16 +114,22 @@ def build_dashboard_image(transactions: list[dict], filepath: str) -> str:
 
     som_rows.sort(key=lambda r: r["sana"])
 
+    today = date.today()
+    target_month_key = month_filter or (today.year, today.month)
+    if target_month_key[1] == 1:
+        prev_month_key = (target_month_key[0] - 1, 12)
+    else:
+        prev_month_key = (target_month_key[0], target_month_key[1] - 1)
+
+    period_rows = (
+        [r for r in som_rows if (r["sana"].year, r["sana"].month) == target_month_key]
+        if month_filter
+        else som_rows
+    )
+
     total_kirim = sum(r["summa"] for r in som_rows if r["turi"] == "Kirim")
     total_chiqim = sum(r["summa"] for r in som_rows if r["turi"] == "Chiqim")
     umumiy_balans = total_kirim - total_chiqim
-
-    today = date.today()
-    cur_month_key = (today.year, today.month)
-    if today.month == 1:
-        prev_month_key = (today.year - 1, 12)
-    else:
-        prev_month_key = (today.year, today.month - 1)
 
     def _month_totals(month_key):
         kirim = sum(
@@ -115,7 +142,7 @@ def build_dashboard_image(transactions: list[dict], filepath: str) -> str:
         )
         return kirim, chiqim
 
-    davr_kirim, davr_chiqim = _month_totals(cur_month_key)
+    davr_kirim, davr_chiqim = _month_totals(target_month_key)
     prev_kirim, prev_chiqim = _month_totals(prev_month_key)
     davr_farq = davr_kirim - davr_chiqim
     prev_farq = prev_kirim - prev_chiqim
@@ -129,19 +156,20 @@ def build_dashboard_image(transactions: list[dict], filepath: str) -> str:
     kirim_pct = _pct_change(davr_kirim, prev_kirim)
     chiqim_pct = _pct_change(davr_chiqim, prev_chiqim)
 
+    trend_rows = period_rows if month_filter else som_rows
     balans_trend: list[tuple[date, float]] = []
     running = 0.0
     by_day: dict[date, float] = defaultdict(float)
-    for r in som_rows:
+    for r in trend_rows:
         by_day[r["sana"]] += r["summa"] if r["turi"] == "Kirim" else -r["summa"]
     for d in sorted(by_day):
         running += by_day[d]
         balans_trend.append((d, running))
-    if len(balans_trend) > 30:
+    if not month_filter and len(balans_trend) > 30:
         balans_trend = balans_trend[-30:]
 
     by_category: dict[str, float] = defaultdict(float)
-    for r in som_rows:
+    for r in period_rows:
         if r["turi"] == "Chiqim":
             by_category[r["kategoriya"]] += r["summa"]
     top_categories = sorted(by_category.items(), key=lambda x: x[1], reverse=True)
@@ -166,33 +194,38 @@ def build_dashboard_image(transactions: list[dict], filepath: str) -> str:
     ax_title = fig.add_subplot(gs[0, :])
     ax_title.axis("off")
     ax_title.text(0, 0.75, "Moliyaviy Dashboard", fontsize=22, weight="bold", color=_TEXT)
-    ax_title.text(
-        0, 0.15,
-        f"Bugungi holat — {today.strftime('%d.%m.%Y')}",
-        fontsize=12, color=_MUTED,
-    )
+    if month_filter:
+        subtitle = f"Davr — {month_label_uz(*target_month_key)}"
+    else:
+        subtitle = f"Barcha davr — {today.strftime('%d.%m.%Y')} holatiga"
+    ax_title.text(0, 0.15, subtitle, fontsize=12, color=_MUTED)
+
+    davr_label = month_label_uz(*target_month_key) if month_filter else "Shu oy"
 
     ax1 = fig.add_subplot(gs[1, 0])
-    _stat_card(ax1, "Umumiy balans", f"{_format_amount(umumiy_balans)} so'm", None, True)
+    if month_filter:
+        _stat_card(ax1, f"{davr_label} — balans", f"{_format_amount(davr_farq)} so'm", None, True)
+    else:
+        _stat_card(ax1, "Umumiy balans", f"{_format_amount(umumiy_balans)} so'm", None, True)
 
     ax2 = fig.add_subplot(gs[1, 1])
     _stat_card(
-        ax2, "Shu oy — farq", f"{_format_amount(davr_farq)} so'm",
-        f"{abs(farq_pct):.0f}% o'tgan oyga" if farq_pct is not None else None,
+        ax2, f"{davr_label} — farq", f"{_format_amount(davr_farq)} so'm",
+        f"{abs(farq_pct):.0f}% oldingi oyga" if farq_pct is not None else None,
         farq_pct is not None and farq_pct >= 0,
     )
 
     ax3 = fig.add_subplot(gs[1, 2])
     _stat_card(
-        ax3, "Shu oy — chiqim", f"{_format_amount(davr_chiqim)} so'm",
-        f"{abs(chiqim_pct):.0f}% o'tgan oyga" if chiqim_pct is not None else None,
+        ax3, f"{davr_label} — chiqim", f"{_format_amount(davr_chiqim)} so'm",
+        f"{abs(chiqim_pct):.0f}% oldingi oyga" if chiqim_pct is not None else None,
         chiqim_pct is not None and chiqim_pct <= 0,
     )
 
     ax4 = fig.add_subplot(gs[1, 3])
     _stat_card(
-        ax4, "Shu oy — daromad", f"{_format_amount(davr_kirim)} so'm",
-        f"{abs(kirim_pct):.0f}% o'tgan oyga" if kirim_pct is not None else None,
+        ax4, f"{davr_label} — daromad", f"{_format_amount(davr_kirim)} so'm",
+        f"{abs(kirim_pct):.0f}% oldingi oyga" if kirim_pct is not None else None,
         kirim_pct is not None and kirim_pct >= 0,
     )
 
@@ -204,7 +237,8 @@ def build_dashboard_image(transactions: list[dict], filepath: str) -> str:
         ys = [v for _, v in balans_trend]
         inner.plot(xs, ys, color=_INDIGO, linewidth=2.5, marker="o", markersize=3)
         inner.fill_between(xs, ys, min(ys + [0]) if ys else 0, color=_INDIGO, alpha=0.12)
-        inner.set_title("Balans trendi", loc="left", fontsize=13, color=_TEXT, weight="bold", pad=10)
+        trend_title = f"Balans trendi — {davr_label}" if month_filter else "Balans trendi"
+        inner.set_title(trend_title, loc="left", fontsize=13, color=_TEXT, weight="bold", pad=10)
         inner.spines[["top", "right", "left"]].set_visible(False)
         inner.tick_params(axis="x", labelsize=8, colors=_MUTED, rotation=30)
         inner.tick_params(axis="y", labelsize=8, colors=_MUTED)
@@ -260,8 +294,13 @@ def build_dashboard_image(transactions: list[dict], filepath: str) -> str:
         chiqim_vals = [monthly[k]["Chiqim"] for k in month_keys]
         x = range(len(month_keys))
         width = 0.34
-        inner.bar([i - width / 2 for i in x], kirim_vals, width=width, color=_INDIGO, label="Daromad")
-        inner.bar([i + width / 2 for i in x], chiqim_vals, width=width, color=_PINK, label="Xarajat")
+        alphas = [1.0 if (not month_filter or k == target_month_key) else 0.35 for k in month_keys]
+        kirim_bars = inner.bar([i - width / 2 for i in x], kirim_vals, width=width, color=_INDIGO, label="Daromad")
+        chiqim_bars = inner.bar([i + width / 2 for i in x], chiqim_vals, width=width, color=_PINK, label="Xarajat")
+        for bar, a in zip(kirim_bars, alphas):
+            bar.set_alpha(a)
+        for bar, a in zip(chiqim_bars, alphas):
+            bar.set_alpha(a)
         inner.set_xticks(list(x))
         inner.set_xticklabels(labels, fontsize=9, color=_MUTED)
         inner.tick_params(axis="y", labelsize=8, colors=_MUTED)
