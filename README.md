@@ -47,6 +47,23 @@ cp .env.example .env
 python main.py
 ```
 
+## 24/7 ishlashi uchun Railway'ga joylashtirish
+
+Bot doimiy (kompyuter o'chirilgan yoki uxlab qolgan taqdirda ham) ishlashi uchun uni Railway kabi bulutli xizmatga joylashtirish mumkin:
+
+1. [railway.app](https://railway.app/) da hisob oching (GitHub orqali kirish qulay) va kartangizni bog'lang (Railway pullik, lekin kichik botlar uchun oyiga bir necha dollar yetadi).
+2. **New Project → Deploy from GitHub repo** ni tanlang va shu repozitoriyni (`hisobchiai`) tanlang.
+3. Loyiha `Procfile` (`worker: python main.py`) orqali avtomatik "worker" (fon jarayoni) sifatida aniqlanadi — alohida sozlash shart emas.
+4. **Variables** bo'limiga o'ting va quyidagi barcha o'zgaruvchilarni qo'shing (`.env` faylingizdagi qiymatlar bilan bir xil):
+   - `TELEGRAM_BOT_TOKEN`
+   - `OPENAI_API_KEY`
+   - `SPREADSHEET_ID`
+   - `WORKSHEET_NAME` (masalan `Tranzaksiyalar`)
+   - `ALLOWED_USER_IDS`
+   - `GOOGLE_CREDENTIALS_JSON` — bu yerga `credentials.json` faylining **butun matnini** joylang (Railway ko'p qatorli matnni qabul qiladi, formatlash shart emas). Bu bo'lsa, `GOOGLE_CREDENTIALS_FILE`ni qo'shish shart emas.
+5. Saqlagach, Railway avtomatik deploy qiladi va bot fon jarayoni sifatida doimiy ishlay boshlaydi.
+6. Keyingi safar kodni yangilab, GitHub'ga push qilsangiz, Railway avtomatik qayta deploy qiladi.
+
 ## Buyruqlar
 
 - `/start` — botni boshlash, tanishtirish
@@ -60,11 +77,16 @@ excel bot/
 ├── main.py                  # Bot kirish nuqtasi
 ├── config.py                 # Sozlamalar (.env dan o'qiydi)
 ├── requirements.txt
+├── Procfile                   # Railway/Heroku uchun worker jarayoni
+├── runtime.txt                # Python versiyasi (bulut uchun)
 ├── .env.example
 ├── handlers/
 │   ├── access.py               # ruxsat berilgan foydalanuvchilarni tekshirish
+│   ├── keyboard.py             # asosiy tugmalar klaviaturasi
 │   ├── common.py              # /start, /help
 │   ├── accountant.py          # matn/ovozli xabar -> tranzaksiya
+│   ├── balance.py              # /balans
+│   ├── cancel.py                # yozuvni bekor qilish (undo)
 │   ├── export.py               # /excel eksport
 │   └── advisor.py              # hujjat tahlili
 └── services/

@@ -1,3 +1,4 @@
+import json
 import re
 
 import gspread
@@ -18,9 +19,13 @@ def get_worksheet():
     if _worksheet is not None:
         return _worksheet
 
-    creds = Credentials.from_service_account_file(
-        config.GOOGLE_CREDENTIALS_FILE, scopes=_SCOPES
-    )
+    if config.GOOGLE_CREDENTIALS_JSON:
+        creds_info = json.loads(config.GOOGLE_CREDENTIALS_JSON)
+        creds = Credentials.from_service_account_info(creds_info, scopes=_SCOPES)
+    else:
+        creds = Credentials.from_service_account_file(
+            config.GOOGLE_CREDENTIALS_FILE, scopes=_SCOPES
+        )
     client = gspread.authorize(creds)
     spreadsheet = client.open_by_key(config.SPREADSHEET_ID)
 
