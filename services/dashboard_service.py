@@ -116,6 +116,22 @@ def list_available_months(transactions: list[dict]) -> list[tuple[int, int]]:
     return sorted(months)
 
 
+def filter_transactions_by_month(
+    transactions: list[dict], month_filter: tuple[int, int] | None
+) -> list[dict]:
+    """Xom tranzaksiya lug'atlarini berilgan (yil, oy)ga mos qatorlarga filtrlaydi.
+    month_filter None bo'lsa, hammasini o'zgarishsiz qaytaradi."""
+    if month_filter is None:
+        return transactions
+
+    filtered = []
+    for row in transactions:
+        d = _parse_date(row.get("Sana"))
+        if d is not None and (d.year, d.month) == month_filter:
+            filtered.append(row)
+    return filtered
+
+
 def build_dashboard_image(
     transactions: list[dict], filepath: str, month_filter: tuple[int, int] | None = None
 ) -> str:

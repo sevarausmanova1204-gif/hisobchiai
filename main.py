@@ -65,6 +65,9 @@ def main() -> None:
     application.add_handler(
         CallbackQueryHandler(dashboard.send_period_dashboard, pattern=r"^dashp:")
     )
+    application.add_handler(
+        CallbackQueryHandler(export.send_period_report, pattern=r"^reportp:")
+    )
 
     logger.info("Bot ishga tushdi...")
     application.run_polling(allowed_updates=None)
