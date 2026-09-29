@@ -93,6 +93,9 @@ Faqat quyidagi JSON formatida javob ber, boshqa hech narsa yozma:
     except (TypeError, ValueError, KeyError):
         return None
 
+    if data["summa"] <= 0:
+        return None
+
     return data
 
 
@@ -127,6 +130,61 @@ uslubida yoz. Raqamlarni takrorlashda bo'shliq bilan ajratilgan formatdan foydal
         model=config.OPENAI_TEXT_MODEL,
         messages=[{"role": "user", "content": prompt}],
         temperature=0.5,
+    )
+    return response.choices[0].message.content.strip()
+
+
+def generate_money_psychology_advice(overspend: dict, savings: dict) -> str:
+    client = get_client()
+
+    if overspend.get("overspend"):
+        overspend_lines = "\n".join(
+            f"- {o['kategoriya']}: joriy oyda {o['joriy']:,.0f} so'm, oldingi oylar o'rtachasi "
+            f"{o['ortacha']:,.0f} so'm ({o['foiz']:.0f}% ko'p)".replace(",", " ")
+            for o in overspend["overspend"]
+        )
+    else:
+        overspend_lines = "(bu oy hech bir kategoriyada sezilarli ortiqcha xarajat aniqlanmadi)"
+
+    if savings.get("has_data"):
+        savings_lines = "\n".join(
+            f"- {p['oy']} oyda: taxminan {p['oddiy_yigindi']:,.0f} so'm".replace(",", " ")
+            for p in savings["projections"]
+        )
+        saving_header = f"Oyiga {savings['monthly_saving']:,.0f} so'm tejash rejasi:".replace(",", " ")
+    else:
+        savings_lines = "(hozircha aniq tejash summasi yo'q)"
+        saving_header = "Tejash rejasi:"
+
+    prompt = f"""Sen pul psixologiyasi (behavioral finance) bo'yicha professional moliyaviy
+maslahatchisan. Foydalanuvchining shu oygi xarajat tahlili quyida berilgan.
+
+Ortiqcha xarajat qilingan kategoriyalar (oldingi oylar o'rtachasiga nisbatan):
+{overspend_lines}
+
+{saving_header}
+{savings_lines}
+
+Yuqoridagi ma'lumotlar asosida o'zbek tilida, 150-220 so'zlik qisqa, ilhomlantiruvchi va
+amaliy maslahat yoz. Albatta quyidagi narsalarni hisobga ol:
+- Nega aynan shu kategoriyalarda xarajat ko'payib ketgan bo'lishi mumkinligini pul
+  psixologiyasi nuqtai nazaridan tushuntir (masalan "lifestyle inflation" — daromad
+  oshgani sayin xarajatning ham avtomatik oshib ketishi, "latte factor" — kichik-kichik,
+  sezilmaydigan xarajatlarning yig'ilib ketishi, "mental accounting" — pulni turlicha
+  "xaltachalarga" bo'lib noto'g'ri baholash, ijtimoiy tarmoq/atrofdagilar bilan solishtirish
+  ta'siri va h.k. — mos kelganini tanlab ishlat, hammasini sanab chiqma).
+- "Avval o'zingizga to'lang" (pay yourself first) tamoyili asosida, daromad kelishi bilanoq
+  tejash summasini avtomatik ajratib qo'yishni tavsiya qil.
+- Tejalgan pul qanday aniq natijaga olib kelishi mumkinligini (masalan zaxira jamg'arma,
+  katta xarid, erkinlik hissi) hayotiy va ilhomlantiruvchi tarzda tasvirla, lekin raqamlarni
+  qayta sanab o'tirma — ular allaqachon foydalanuvchiga alohida ko'rsatiladi.
+Faqat matn yoz, sarlavha yoki ro'yxat belgilaridan foydalanma — iliq, do'stona va tabiiy
+suhbat uslubida yoz."""
+
+    response = client.chat.completions.create(
+        model=config.OPENAI_TEXT_MODEL,
+        messages=[{"role": "user", "content": prompt}],
+        temperature=0.6,
     )
     return response.choices[0].message.content.strip()
 

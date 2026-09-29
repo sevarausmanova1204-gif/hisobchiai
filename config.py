@@ -15,6 +15,10 @@ WORKSHEET_NAME = os.getenv("WORKSHEET_NAME", "Tranzaksiyalar")
 OPENAI_TEXT_MODEL = os.getenv("OPENAI_TEXT_MODEL", "gpt-4o-mini")
 OPENAI_TRANSCRIBE_MODEL = os.getenv("OPENAI_TRANSCRIBE_MODEL", "whisper-1")
 
+# Oylik avtomatik hisobot va boshqa vaqtga bog'liq funksiyalar shu vaqt mintaqasida
+# ishlaydi (server odatda UTC'da ishlaydi, lekin foydalanuvchilar O'zbekistonda).
+TIMEZONE = os.getenv("TIMEZONE", "Asia/Tashkent")
+
 _allowed_ids_raw = os.getenv("ALLOWED_USER_IDS", "")
 ALLOWED_USER_IDS = {
     int(uid.strip()) for uid in _allowed_ids_raw.split(",") if uid.strip().isdigit()

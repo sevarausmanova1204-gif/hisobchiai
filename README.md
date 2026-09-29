@@ -4,6 +4,7 @@ Ikkita asosiy funksiyaga ega Telegram bot:
 
 1. **AI-hisobchi** — foydalanuvchi matn yoki ovozli xabar yuboradi ("Bozordan 50000 so'm oziq-ovqat oldim"), bot buni AI yordamida tahlil qilib (kirim/chiqim, summa, kategoriya, sana) Google Sheets jadvaliga yozadi. `/excel` buyrug'i orqali barcha yozuvlar Excel (.xlsx) fayl ko'rinishida, kategoriyalar bo'yicha xulosa varag'i bilan qaytariladi.
 2. **AI-maslahatchi** — foydalanuvchi istalgan hujjat (PDF, DOCX, XLSX, TXT, CSV) yuborsa, bot professional tahlilchi sifatida hujjatni chuqur tahlil qilib, tuzilgan xulosa qaytaradi.
+3. **Tejash rejasi (`/tejash`)** — bot har oy qaysi xarajat kategoriyasida odatdagidan ko'p sarflaganingizni aniqlaydi, shu asosda 3/6/12/24/36 oylik tejash prognozini hisoblaydi va pul psixologiyasi (behavioral finance) tamoyillariga asoslangan shaxsiy maslahat beradi. `ALLOWED_USER_IDS` sozlangan bo'lsa, bu hisobot har oyning 1-sanasida avtomatik ravishda ham yuboriladi.
 
 ## Talab qilinadigan narsalar
 
@@ -39,7 +40,9 @@ cp .env.example .env
    - Yangi Google Sheets jadval yarating, uni service account emailiga (masalan `xxx@xxx.iam.gserviceaccount.com`) **Editor** huquqi bilan ulashing (Share).
    - Jadval URL manzilidagi ID qismini (`https://docs.google.com/spreadsheets/d/<SPREADSHEET_ID>/edit`) `.env` dagi `SPREADSHEET_ID` ga qo'ying.
 
-5. **Ruxsat berilgan foydalanuvchilar (ixtiyoriy)**: `.env` dagi `ALLOWED_USER_IDS` ga Telegram foydalanuvchi ID'laringizni vergul bilan ajratib yozing (masalan `@userinfo3bot` yordamida topish mumkin). Faqat shu ID'lar botdan foydalana oladi. Bo'sh qoldirilsa, bot hamma uchun ochiq bo'ladi.
+5. **Ruxsat berilgan foydalanuvchilar (ixtiyoriy)**: `.env` dagi `ALLOWED_USER_IDS` ga Telegram foydalanuvchi ID'laringizni vergul bilan ajratib yozing (masalan `@userinfo3bot` yordamida topish mumkin). Faqat shu ID'lar botdan foydalana oladi. Bo'sh qoldirilsa, bot hamma uchun ochiq bo'ladi. Bu ro'yxat bo'sh bo'lsa, `/tejash` hisobotining oylik avtomatik yuborilishi ham ishlamaydi (kimga yuborishni bilmaydi).
+
+6. **Vaqt mintaqasi (ixtiyoriy)**: `.env` dagi `TIMEZONE` — oylik avtomatik hisobot qaysi mahalliy vaqtda yuborilishini belgilaydi (standart: `Asia/Tashkent`, ertalab soat 9:00 da).
 
 ## Ishga tushirish
 
@@ -69,6 +72,7 @@ Bot doimiy (kompyuter o'chirilgan yoki uxlab qolgan taqdirda ham) ishlashi uchun
 - `/start` — botni boshlash, tanishtirish
 - `/help` — yordam
 - `/excel` — barcha moliyaviy yozuvlarni Excel fayl ko'rinishida yuklab olish
+- `/tejash` — ortiqcha xarajat qilingan kategoriyalar, tejash maqsadi hisob-kitobi va pul psixologiyasi maslahati (`/tejash 500000` — aniq summa bilan)
 
 ## Loyiha tuzilishi
 
@@ -88,10 +92,12 @@ excel bot/
 │   ├── balance.py              # /balans
 │   ├── cancel.py                # yozuvni bekor qilish (undo)
 │   ├── export.py               # /excel eksport
+│   ├── budget.py                # /tejash — tejash rejasi va pul psixologiyasi maslahati
 │   └── advisor.py              # hujjat tahlili
 └── services/
     ├── ai_service.py            # OpenAI: kategoriyalash, transkripsiya, tahlil
     ├── sheets_service.py        # Google Sheets bilan ishlash
+    ├── budget_advisor_service.py # ortiqcha xarajat tahlili va tejash prognozi hisob-kitobi
     ├── excel_service.py         # .xlsx fayl generatsiya qilish
     └── document_service.py      # PDF/DOCX/XLSX/TXT dan matn ajratib olish
 ```

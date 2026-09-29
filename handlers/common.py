@@ -20,6 +20,9 @@ Har qanday hujjat (PDF, Word, Excel, TXT) yuboring — men uni professional tahl
 🔮 <b>Xarajat prognozi</b>
 /prognoz — o'tgan oylardagi va doimiy takrorlanuvchi xarajatlaringizni o'rganib, maslahat beraman va kelasi 1/3/5/9/12 oy uchun taxminiy xarajatni hisoblab beraman.
 
+💰 <b>Tejash rejasi</b>
+/tejash — qaysi kategoriyada odatdagidan ko'p xarajat qilganingizni topib beraman, tejash maqsadi bo'yicha 3/6/12/24/36 oylik natija hisob-kitobini va pul psixologiyasi bo'yicha shaxsiy maslahat beraman. Har oyning 1-sanasida bu hisobotni o'zim ham avtomatik yuborib turaman.
+
 Yordam uchun: /help"""
 
 HELP_TEXT = """<b>Buyruqlar</b>
@@ -30,12 +33,13 @@ HELP_TEXT = """<b>Buyruqlar</b>
 /dashboard — moliyaviy holatingiz bo'yicha vizual dashboard (rasm), davr tanlab
 /sheetsdashboard — Google Sheets ichida jadval va diagrammalardan iborat "Dashboard" varag'ini yaratadi/yangilaydi
 /prognoz — o'tgan oylar va doimiy xarajatlaringiz asosida maslahat va 1/3/5/9/12 oylik xarajat prognozi
+/tejash — ortiqcha xarajat qilingan kategoriyalar, tejash maqsadi bo'yicha hisob-kitob va pul psixologiyasi maslahati (masalan: /tejash 500000 — aniq summa bilan)
 /tozalash — Google Sheets'dagi aynan bir xil takroriy yozuvlarni tozalaydi
 
 <b>Qanday ishlatiladi</b>
 1. Xarajat yoki daromadingizni matn yoki ovozli xabar orqali yozing — bot buni avtomatik kategoriyalab, Google Sheets-dagi Kirim yoki Chiqim varag'iga saqlaydi.
 2. Istalgan hujjatni (PDF/DOCX/XLSX/TXT) yuboring — bot professional tahlilchi sifatida chuqur tahlil qilib javob beradi.
-3. Pastdagi tugmalardan ham foydalanishingiz mumkin: 📊 Hisobot, 💼 Balans, 📈 Dashboard, 📄 Sheets Dashboard, 🧠 AI Maslahatchi, 🔮 Xarajat prognozi, ℹ️ Yordam."""
+3. Pastdagi tugmalardan ham foydalanishingiz mumkin: 📊 Hisobot, 💼 Balans, 📈 Dashboard, 📄 Sheets Dashboard, 🧠 AI Maslahatchi, 🔮 Xarajat prognozi, 💰 Tejash rejasi, ℹ️ Yordam."""
 
 ADVISOR_PROMPT_TEXT = """🧠 <b>AI Maslahatchi</b>
 
