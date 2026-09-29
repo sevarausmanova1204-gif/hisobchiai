@@ -93,6 +93,9 @@ Faqat quyidagi JSON formatida javob ber, boshqa hech narsa yozma:
     except (TypeError, ValueError, KeyError):
         return None
 
+    if data["summa"] <= 0:
+        return None
+
     return data
 
 

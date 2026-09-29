@@ -1,5 +1,6 @@
 import logging
 from datetime import time as dt_time
+from zoneinfo import ZoneInfo
 
 from telegram.ext import (
     Application,
@@ -39,7 +40,18 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-MONTHLY_REPORT_TIME = dt_time(hour=9, minute=0)
+
+def _resolve_timezone() -> ZoneInfo:
+    try:
+        return ZoneInfo(config.TIMEZONE)
+    except Exception:
+        logger.warning(
+            "TIMEZONE='%s' noto'g'ri yoki topilmadi, UTC ishlatiladi.", config.TIMEZONE
+        )
+        return ZoneInfo("UTC")
+
+
+MONTHLY_REPORT_TIME = dt_time(hour=9, minute=0, tzinfo=_resolve_timezone())
 
 
 async def _send_monthly_report(context) -> None:

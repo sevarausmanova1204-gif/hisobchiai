@@ -40,7 +40,9 @@ cp .env.example .env
    - Yangi Google Sheets jadval yarating, uni service account emailiga (masalan `xxx@xxx.iam.gserviceaccount.com`) **Editor** huquqi bilan ulashing (Share).
    - Jadval URL manzilidagi ID qismini (`https://docs.google.com/spreadsheets/d/<SPREADSHEET_ID>/edit`) `.env` dagi `SPREADSHEET_ID` ga qo'ying.
 
-5. **Ruxsat berilgan foydalanuvchilar (ixtiyoriy)**: `.env` dagi `ALLOWED_USER_IDS` ga Telegram foydalanuvchi ID'laringizni vergul bilan ajratib yozing (masalan `@userinfo3bot` yordamida topish mumkin). Faqat shu ID'lar botdan foydalana oladi. Bo'sh qoldirilsa, bot hamma uchun ochiq bo'ladi.
+5. **Ruxsat berilgan foydalanuvchilar (ixtiyoriy)**: `.env` dagi `ALLOWED_USER_IDS` ga Telegram foydalanuvchi ID'laringizni vergul bilan ajratib yozing (masalan `@userinfo3bot` yordamida topish mumkin). Faqat shu ID'lar botdan foydalana oladi. Bo'sh qoldirilsa, bot hamma uchun ochiq bo'ladi. Bu ro'yxat bo'sh bo'lsa, `/tejash` hisobotining oylik avtomatik yuborilishi ham ishlamaydi (kimga yuborishni bilmaydi).
+
+6. **Vaqt mintaqasi (ixtiyoriy)**: `.env` dagi `TIMEZONE` — oylik avtomatik hisobot qaysi mahalliy vaqtda yuborilishini belgilaydi (standart: `Asia/Tashkent`, ertalab soat 9:00 da).
 
 ## Ishga tushirish
 
